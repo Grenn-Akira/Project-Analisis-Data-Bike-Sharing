@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
+import os
 sns.set(style='dark')
 
 def create_daily_rentals_df(df):
@@ -49,7 +50,7 @@ def create_holiday_df(df):
     return holiday_df
 
 # Load data
-all_df = pd.read_csv("main_data.csv")
+all_df = pd.read_csv(os.path.join(os.path.dirname(__file__), "main_data.csv"))
  
 datetime_columns = ["dteday"]
 all_df.sort_values(by="dteday", inplace=True)
