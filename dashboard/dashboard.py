@@ -2,7 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
-import os
 sns.set(style='dark')
 
 def create_daily_rentals_df(df):
@@ -28,8 +27,8 @@ def create_workingday_df(df):
         "workingday": "max"
     }).reset_index()
  
-    oktober_desember_2011_df = daily_df[(daily_df['dteday'] >= '2011-10-01') & (daily_df['dteday'] <= '2011-12-31') & (daily_df['workingday'] == 1)]
-    januari_maret_2012_df = daily_df[(daily_df['dteday'] >= '2012-01-01') & (daily_df['dteday'] <= '2012-03-31') & (daily_df['workingday'] == 1)]
+    oktober_desember_2011_df = daily_df[(daily_df['dteday'] >= '2011-10-01') & (daily_df['dteday'] <= '2011-12-31') & (daily_df['workingday'] == 1)].copy()
+    januari_maret_2012_df = daily_df[(daily_df['dteday'] >= '2012-01-01') & (daily_df['dteday'] <= '2012-03-31') & (daily_df['workingday'] == 1)].copy()
  
     oktober_desember_2011_df["periode"] = "Okt-Des 2011"
     januari_maret_2012_df["periode"] = "Jan-Mar 2012"
@@ -50,11 +49,11 @@ def create_holiday_df(df):
     return holiday_df
 
 # Load data
-all_df = pd.read_csv(os.path.join(os.path.dirname(__file__), "main_data.csv"))
+all_df = pd.read_csv("main_data.csv")
  
 datetime_columns = ["dteday"]
 all_df.sort_values(by="dteday", inplace=True)
-all_df.reset_index(inplace=True)
+all_df.reset_index(drop=True, inplace=True)
  
 for column in datetime_columns:
     all_df[column] = pd.to_datetime(all_df[column])
@@ -65,15 +64,19 @@ min_date = all_df["dteday"].min()
 max_date = all_df["dteday"].max()
  
 with st.sidebar:
-    # Menambahkan logo perusahaan
-    st.image("https://github.com/dicodingacademy/assets/raw/main/logo.png")
- 
-    # Mengambil start_date & end_date dari date_input
-    start_date, end_date = st.date_input(
+    # Mengambil rentang tanggal dari date_input
+    date_range = st.date_input(
         label='Rentang Waktu', min_value=min_date,
         max_value=max_date,
         value=[min_date, max_date]
     )
+
+# date_input hanya mengembalikan 1 nilai saat user baru memilih tanggal awal
+if len(date_range) != 2:
+    st.info("Pilih tanggal awal dan tanggal akhir pada sidebar untuk menampilkan data.")
+    st.stop()
+
+start_date, end_date = date_range
  
 main_df = all_df[(all_df["dteday"] >= str(start_date)) &
                 (all_df["dteday"] <= str(end_date))]
@@ -120,7 +123,7 @@ if len(daily_rentals_df) <= 31:
 st.pyplot(fig)
 
 # Visual Menjawab Pertanyaan 1
-st.subheader("Working Day: Oktober-Desember 2011 vs Januari-Maret 2012")
+st.subheader("Pertanyaan 1: Working Day: Oktober-Desember 2011 vs Januari-Maret 2012")
  
 if workingday_df.empty:
     st.warning("Rentang waktu yang dipilih tidak mencakup periode Okt-Des 2011 atau Jan-Mar 2012.")
@@ -142,7 +145,7 @@ else:
 
 
 # Visual Menjawab Pertanyaan 2
-st.subheader("Jam Tersibuk pada Hari Libur")
+st.subheader("Pertanyaan 2: Pola Peminjaman per Jam pada Hari Libur")
  
 if holiday_df.empty:
     st.warning("Tidak ada hari libur pada rentang waktu yang dipilih!")
